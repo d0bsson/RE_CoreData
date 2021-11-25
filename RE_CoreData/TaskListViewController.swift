@@ -1,34 +1,50 @@
 //
-//  ViewController.swift
-//  RE_CoreData
+//  TaskListViewController.swift
+//  CoreDataDemo
 //
-//  Created by Дэвид Бердников on 25.11.2021.
+//  Created by Alexey Efimov on 10.05.2021.
 //
 
 import UIKit
+import CoreData
+
+protocol TaskViewControllereDelegate {
+    func reloadData()
+}
 
 class TaskListViewController: UITableViewController {
     
+    private let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    private let cellID = "cell"
+    private var taskList: [Task] = []
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellID)
         setupNavigationBar()
+        fetchData()
     }
-    
+
     private func setupNavigationBar() {
         title = "Task List"
         navigationController?.navigationBar.prefersLargeTitles = true
         
-        let navBarApearence = UINavigationBarAppearance()
-        navBarApearence.configureWithOpaqueBackground()
+        let navBarAppearance = UINavigationBarAppearance()
+        navBarAppearance.configureWithOpaqueBackground()
         
-        navBarApearence.backgroundColor = #colorLiteral(red: 0.002558406442, green: 0.4522010684, blue: 0.9921777844, alpha: 1)
-        navBarApearence.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navBarAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
         
-        navBarApearence.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        navBarAppearance.backgroundColor = UIColor(
+            red: 21/255,
+            green: 101/255,
+            blue: 192/255,
+            alpha: 194/255
+        )
         
-        navigationController?.navigationBar.standardAppearance = navBarApearence
-        navigationController?.navigationBar.scrollEdgeAppearance = navBarApearence
+        navigationController?.navigationBar.standardAppearance = navBarAppearance
+        navigationController?.navigationBar.scrollEdgeAppearance = navBarAppearance
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             barButtonSystemItem: .add,
@@ -41,8 +57,41 @@ class TaskListViewController: UITableViewController {
     
     @objc private func addNewTask() {
         let taskVC = TaskViewController()
-        present(TaskViewController(), animated: true)
+        taskVC.delegate = self
+        present(taskVC, animated: true)
     }
     
+    private func fetchData() {
+        let fetchRequest: NSFetchRequest<Task> = Task.fetchRequest()
+        
+        do {
+            taskList = try context.fetch(fetchRequest)
+        } catch let error {
+            print(error)
+        }
+    }
+}
+
+// MARK: - UITableViewDataSource
+extension TaskListViewController {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        taskList.count
+    }
     
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellID, for: indexPath)
+        let task = taskList[indexPath.row]
+        var content = cell.defaultContentConfiguration()
+        content.text = task.title
+        cell.contentConfiguration = content
+        return cell
+    }
+}
+
+// MARK: - TaskViewControllereDelegate
+extension TaskListViewController: TaskViewControllereDelegate {
+    func reloadData() {
+        fetchData()
+        tableView.reloadData()
+    }
 }

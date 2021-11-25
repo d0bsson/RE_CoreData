@@ -1,13 +1,18 @@
 //
 //  TaskViewController.swift
-//  RE_CoreData
+//  CoreDataDemo
 //
-//  Created by Дэвид Бердников on 26.11.2021.
+//  Created by Alexey Efimov on 10.05.2021.
 //
 
 import UIKit
+import CoreData
 
 class TaskViewController: UIViewController {
+    
+    var delegate: TaskViewControllereDelegate?
+    
+    private let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     private lazy var taskTextField: UITextField = {
         let textField = UITextField()
@@ -18,33 +23,35 @@ class TaskViewController: UIViewController {
     
     private lazy var saveButton: UIButton = {
         let button = UIButton()
-        button.backgroundColor = #colorLiteral(red: 0, green: 0.3658695221, blue: 0.99628824, alpha: 1)
+        button.backgroundColor = UIColor(red: 21/255, green: 101/255, blue: 192/255, alpha: 1)
         button.setTitle("Save Task", for: .normal)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
         button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 5
         button.addTarget(self, action: #selector(save), for: .touchUpInside)
         return button
     }()
     
     private lazy var cancelButton: UIButton = {
         let button = UIButton()
-        button.backgroundColor = #colorLiteral(red: 0.8078431487, green: 0.02745098062, blue: 0.3333333433, alpha: 1)
+        button.backgroundColor = #colorLiteral(red: 0.9372549057, green: 0.3490196168, blue: 0.1921568662, alpha: 1)
         button.setTitle("Cancel", for: .normal)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
         button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 5
         button.addTarget(self, action: #selector(cancel), for: .touchUpInside)
         return button
     }()
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-        setupSubViews(subviews: taskTextField, saveButton, cancelButton)
+        setup(subviews: taskTextField, saveButton, cancelButton)
         setConstraints()
     }
     
-    private func setupSubViews(subviews: UIView...) {
-        subviews.forEach { (subview) in
+    private func setup(subviews: UIView...) {
+        subviews.forEach { subview in
             view.addSubview(subview)
         }
     }
@@ -61,7 +68,7 @@ class TaskViewController: UIViewController {
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            saveButton.topAnchor.constraint(equalTo: taskTextField.bottomAnchor, constant: 16),
+            saveButton.topAnchor.constraint(equalTo: taskTextField.bottomAnchor, constant: 20),
             saveButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
             saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40)
         ])
@@ -69,13 +76,25 @@ class TaskViewController: UIViewController {
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            cancelButton.topAnchor.constraint(equalTo: saveButton.bottomAnchor, constant: 8),
+            cancelButton.topAnchor.constraint(equalTo: saveButton.bottomAnchor, constant: 20),
             cancelButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
             cancelButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40)
         ])
     }
     
     @objc private func save() {
+        guard let entityDescription = NSEntityDescription.entity(forEntityName: "Task", in: context) else { return }
+        guard let task = NSManagedObject(entity: entityDescription, insertInto: context) as? Task else { return }
+        task.title = taskTextField.text
+        
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch let error {
+                print(error.localizedDescription)
+            }
+        }
+        delegate?.reloadData()
         dismiss(animated: true)
     }
     
