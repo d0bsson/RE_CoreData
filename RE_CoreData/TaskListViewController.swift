@@ -8,22 +8,40 @@
 import UIKit
 
 class TaskListViewController: UITableViewController {
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-        // Do any additional setup after loading the view.
+        setupNavigationBar()
     }
     
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
+    private func setupNavigationBar() {
+        title = "Task List"
+        navigationController?.navigationBar.prefersLargeTitles = true
+        
+        let navBarApearence = UINavigationBarAppearance()
+        navBarApearence.configureWithOpaqueBackground()
+        
+        navBarApearence.backgroundColor = #colorLiteral(red: 0.002558406442, green: 0.4522010684, blue: 0.9921777844, alpha: 1)
+        navBarApearence.titleTextAttributes = [.foregroundColor: UIColor.white]
+        
+        navBarApearence.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        
+        navigationController?.navigationBar.standardAppearance = navBarApearence
+        navigationController?.navigationBar.scrollEdgeAppearance = navBarApearence
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .add,
+            target: self,
+            action: #selector(addNewTask)
+        )
+        
+        navigationController?.navigationBar.tintColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
     }
-    */
-
+    
+    @objc private func addNewTask() {
+        
+    }
+    
+    
 }
