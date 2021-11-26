@@ -16,7 +16,7 @@ class TaskListViewController: UITableViewController {
     
     private let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     private let cellID = "cell"
-    private var taskList: [Task] = []
+    private var taskList = [Task]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -86,12 +86,34 @@ extension TaskListViewController {
         cell.contentConfiguration = content
         return cell
     }
+    
+    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { (action, view, completion) in
+            let deletedTask = self.taskList[indexPath.row]
+            
+            self.taskList.remove(at: indexPath.row)
+            self.context.delete(deletedTask)
+            if self.context.hasChanges {
+                do {
+                    try self.context.save()
+                } catch let error {
+                    print(error.localizedDescription)
+                }
+            }
+            tableView.deleteRows(at: [indexPath], with: .bottom)
+        }
+        
+        
+        return UISwipeActionsConfiguration(actions: [deleteAction])
+    }
 }
 
-// MARK: - TaskViewControllereDelegate
+// MARK: - TaskViewControllerDelegate
 extension TaskListViewController: TaskViewControllereDelegate {
     func reloadData() {
         fetchData()
         tableView.reloadData()
     }
+    
+    
 }
