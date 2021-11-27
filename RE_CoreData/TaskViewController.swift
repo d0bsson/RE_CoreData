@@ -12,7 +12,7 @@ class TaskViewController: UIViewController {
     
     var delegate: TaskViewControllereDelegate?
     
-    private let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    private let context = CoreDataManager.shared.viewContext
     
     private lazy var taskTextField: UITextField = {
         let textField = UITextField()
