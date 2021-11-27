@@ -7,10 +7,6 @@
 
 import UIKit
 
-protocol TaskViewControllereDelegate {
-    func reloadData()
-}
-
 class TaskListViewController: UITableViewController {
     
     private let cellID = "cell"
@@ -53,12 +49,6 @@ class TaskListViewController: UITableViewController {
         navigationController?.navigationBar.tintColor = .white
     }
     
-    @objc private func addNewTask() {
-        let taskVC = TaskViewController()
-        taskVC.delegate = self
-        present(taskVC, animated: true)
-    }
-    
     private func fetchData() {
         CoreDataManager.shared.fetchData { (result) in
             switch result {
@@ -69,42 +59,82 @@ class TaskListViewController: UITableViewController {
             }
         }
     }
+    
+    private func save(task: String) {
+        CoreDataManager.shared.save(task) { task in
+            self.tasks.append(task)
+            self.tableView.insertRows(
+                at: [IndexPath(row: self.tasks.count - 1, section: 0)],
+                with: .automatic
+            )
+        }
+    }
+    
+    @objc
+    private func addNewTask() {
+        showAlert()
+    }
 }
+
+// MARK: - UITableViewDataSource
+extension TaskListViewController {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        tasks.count
+    }
     
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellID, for: indexPath)
+        let task = tasks[indexPath.row]
+        var content = cell.defaultContentConfiguration()
+        content.text = task.title
+        cell.contentConfiguration = content
+        return cell
+    }
     
-    // MARK: - UITableViewDataSource
-    extension TaskListViewController {
-        override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-            tasks.count
+    // MARK: - Edit task
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let task = tasks[indexPath.row]
+        tableView.deselectRow(at: indexPath, animated: true)
+        showAlert(task: task) {
+            tableView.reloadRows(at: [indexPath], with: .automatic)
         }
-        
-        override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-            let cell = tableView.dequeueReusableCell(withIdentifier: cellID, for: indexPath)
-            let task = tasks[indexPath.row]
-            var content = cell.defaultContentConfiguration()
-            content.text = task.title
-            cell.contentConfiguration = content
-            return cell
+    }
+    
+    // MARK: - Delete Task
+    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { (action, view, completion) in
+            let deletedTask = self.tasks[indexPath.row]
+            
+            self.tasks.remove(at: indexPath.row)
+            CoreDataManager.shared.delete(deletedTask)
+            CoreDataManager.shared.saveContext()
+            tableView.deleteRows(at: [indexPath], with: .bottom)
         }
+        return UISwipeActionsConfiguration(actions: [deleteAction])
+    }
+}
+
+// MARK: - Alert Controller
+extension TaskListViewController {
+    private func showAlert(task: Task? = nil, comletion: (() -> Void)? = nil) {
         
-        override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-            let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { (action, view, completion) in
-                let deletedTask = self.tasks[indexPath.row]
-                
-                self.tasks.remove(at: indexPath.row)
-                CoreDataManager.shared.delete(deletedTask)
-                CoreDataManager.shared.saveContext()
-                tableView.deleteRows(at: [indexPath], with: .bottom)
+        let title = task != nil ? "Update task" : "New task"
+        
+        let alert = AlertController(
+            title: title,
+            message: "What do you want to do",
+            preferredStyle: .alert
+        )
+        
+        alert.action(task: task) { (taskName) in
+            if let task = task, let comletion = comletion {
+                CoreDataManager.shared.edit(task, newName: taskName)
+                comletion()
+            } else {
+                self.save(task: taskName)
             }
-            return UISwipeActionsConfiguration(actions: [deleteAction])
         }
+        present(alert, animated: true)
     }
-    
-    // MARK: - TaskViewControllerDelegate
-    extension TaskListViewController: TaskViewControllereDelegate {
-        func reloadData() {
-            fetchData()
-            tableView.reloadData()
-        }
-    }
+}
 
