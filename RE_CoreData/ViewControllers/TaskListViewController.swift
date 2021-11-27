@@ -70,8 +70,7 @@ class TaskListViewController: UITableViewController {
         }
     }
     
-    @objc
-    private func addNewTask() {
+    @objc private func addNewTask() {
         showAlert()
     }
 }
