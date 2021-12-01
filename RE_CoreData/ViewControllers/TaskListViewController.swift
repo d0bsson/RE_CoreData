@@ -105,9 +105,9 @@ extension TaskListViewController {
             let deletedTask = self.tasks[indexPath.row]
             
             self.tasks.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .bottom)
             CoreDataManager.shared.delete(deletedTask)
             CoreDataManager.shared.saveContext()
-            tableView.deleteRows(at: [indexPath], with: .bottom)
         }
         return UISwipeActionsConfiguration(actions: [deleteAction])
     }
